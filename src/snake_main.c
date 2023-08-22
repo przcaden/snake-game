@@ -73,15 +73,16 @@ void game_logic(sessionInfo* session)
 // First loop ran before the game is started by the player.
 void pre_game_loop(sessionInfo* session, char* highScore)
 {
-    while (!WindowShouldClose() && !session->game_started)
+    while (!session->game_started)
     {
+        if (IsKeyPressed(KEY_ESCAPE) || WindowShouldClose()) CloseWindow();
+        
         BeginDrawing();
             ClearBackground(RAYWHITE);
             DrawText("Press ENTER to Begin", 190, 20, 18, BLACK);
             DrawText("High Score:", 675, 90, 24, BLACK);
             DrawText(highScore, 735-(6*strlen(highScore)), 130, 24, BLACK);
             draw_grid_base();
-            ClearBackground(RAYWHITE);
         EndDrawing();
 
         if (startHandler()) session->game_started=1;
@@ -92,11 +93,12 @@ void pre_game_loop(sessionInfo* session, char* highScore)
 void game_session_loop(sessionInfo* session, char* highScore)
 {
     clock_t time_update, new_time;
-    while (!WindowShouldClose() && session->game_started)
+    while (session->game_started)
     {
         // Keep game paused while not in use
         while (!IsWindowMinimized);
         while (!IsWindowHidden);
+        if (IsKeyPressed(KEY_ESCAPE) || WindowShouldClose()) CloseWindow();
 
         // Get time; will be checked for framerate
         time_update = clock();
@@ -136,13 +138,15 @@ void game_over_loop(sessionInfo* session, char* highScore)
         FILE* windata;
         high_score_achieved = 1;
         sprintf(highScore, "%d", session->score);
-        windata = fopen("../data/windata.txt", "w");
+        windata = fopen("data/windata.txt", "w");
         if (windata != NULL) fprintf(windata, highScore);
         fclose(windata);
     }
 
-    while (!WindowShouldClose() && !session->game_started)
+    while (!session->game_started)
     {
+        if (IsKeyPressed(KEY_ESCAPE) || WindowShouldClose()) CloseWindow();
+
         // Draw game over screen; wait for exit or restart
         BeginDrawing();
             ClearBackground(RAYWHITE);
@@ -166,7 +170,7 @@ void game_over_loop(sessionInfo* session, char* highScore)
 int main(int argc, char** argv)
 {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Snake Time");
-    Image window_icon = LoadImage("../data/snake.png");
+    Image window_icon = LoadImage("data/snake.png");
     while(!IsImageReady(window_icon));
     SetWindowIcon(window_icon);
 
@@ -175,7 +179,7 @@ int main(int argc, char** argv)
 
     // Read high score from file
     FILE* windata;
-    windata = fopen("../data/windata.txt", "r");
+    windata = fopen("data/windata.txt", "r");
     char highScore[100];
 
     if (windata == NULL) strcat(highScore, "N/A");
