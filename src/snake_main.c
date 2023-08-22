@@ -14,7 +14,7 @@
 //       GLOBAL DATA       //
 ////////////////////////// */
 
-const uint8_t UPDATES_PER_SEC = 3;
+const uint8_t UPDATES_PER_SEC = 4;
 const uint16_t WINDOW_WIDTH = 920;
 const uint16_t WINDOW_HEIGHT = 660;
 
