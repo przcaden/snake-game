@@ -10,6 +10,11 @@
 #include "gui.h"
 
 
+void game_logic(sessionInfo* session, bool* input_lock);
+void pre_game_loop(sessionInfo* session, char* highScore);
+void game_session_loop(sessionInfo* session, char* highScore);
+void game_over_loop(sessionInfo* session, char* highScore);
+
 /* //////////////////////////
 //       GLOBAL DATA       //
 ////////////////////////// */
@@ -23,7 +28,7 @@ const uint16_t WINDOW_HEIGHT = 660;
 //      EVENT/DATA HANDLING    //
 ////////////////////////////// */
 
-void game_logic(sessionInfo* session)
+void game_logic(sessionInfo* session, bool* input_lock)
 {   
     snakePiece* head = session->head;
     plot* fruit = session->fruit_loc;
@@ -34,7 +39,8 @@ void game_logic(sessionInfo* session)
     printf("Fruit location: (%d, %d)\n", fruit->x, fruit->y);
 
     // Handle directional input
-    arrowKeyHandler(&(session->head->moving_dir));
+    if (!(*input_lock)) arrowKeyHandler(&(session->head->moving_dir));
+    *input_lock = !(*input_lock);
 
     // Check if head has collided with body; game over if so
     if (snake_contains(session->head->next, session->head->loc)) session->game_started = 0;
@@ -93,6 +99,7 @@ void pre_game_loop(sessionInfo* session, char* highScore)
 void game_session_loop(sessionInfo* session, char* highScore)
 {
     clock_t time_update, new_time;
+    bool input_lock = 0;
     while (session->game_started)
     {
         // Keep game paused while not in use
@@ -109,7 +116,7 @@ void game_session_loop(sessionInfo* session, char* highScore)
             DrawText("Game in Progress", 220, 20, 18, BLACK);
             DrawText("High Score:", 675, 90, 24, BLACK);
             DrawText(highScore, 735-(6*strlen(highScore)), 130, 24, BLACK);
-            game_logic(session);
+            game_logic(session, &input_lock);
             draw_grid_base();
             update_grid(session->head, session->fruit_loc);
         EndDrawing();
@@ -122,7 +129,8 @@ void game_session_loop(sessionInfo* session, char* highScore)
         }
 
         // Check again for clean inputs
-        arrowKeyHandler(&(session->head->moving_dir));
+        if (!input_lock) arrowKeyHandler(&(session->head->moving_dir));
+        input_lock = !input_lock;
     }
 }
 
