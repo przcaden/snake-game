@@ -28,5 +28,10 @@ void arrowKeyHandler(enum direction* key_pressed)
 
 bool startHandler()
 {
-    if (IsKeyPressed && GetKeyPressed()==KEY_ENTER) return true;
+    if (IsKeyPressed)
+    {
+        int tempKey = GetKeyPressed();
+        if (tempKey==KEY_ENTER) return true;
+    }
+    return false;
 }
