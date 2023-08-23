@@ -36,12 +36,25 @@ void arrowKeyHandler(enum direction* moving_dir)
     }
 }
 
-bool startHandler()
+bool startHandler(enum difficulty* dif)
 {
     if (IsKeyPressed)
     {
         int tempKey = GetKeyPressed();
-        if (tempKey==KEY_ENTER) return true;
+        switch (tempKey)
+        {
+            case KEY_LEFT:
+                if (*dif == medium) *dif = easy;
+                else if (*dif == hard) *dif = medium;
+                break;
+            case KEY_RIGHT:
+                if (*dif == medium) *dif = hard;
+                else if (*dif == easy) *dif = medium;
+                break;
+            case KEY_ENTER:
+                return true;
+                break;
+        }
     }
     return false;
 }

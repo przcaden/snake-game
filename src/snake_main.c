@@ -11,15 +11,14 @@
 
 
 void game_logic(sessionInfo* session, bool* input_lock);
-void pre_game_loop(sessionInfo* session, char* highScore);
-void game_session_loop(sessionInfo* session, char* highScore);
+void pre_game_loop(sessionInfo* session, char* highScore, int* UPDATES_PER_SEC);
+void game_session_loop(sessionInfo* session, char* highScore, int* UPDATES_PER_SEC);
 void game_over_loop(sessionInfo* session, char* highScore);
 
 /* //////////////////////////
 //       GLOBAL DATA       //
 ////////////////////////// */
 
-const uint8_t UPDATES_PER_SEC = 5;
 const uint16_t WINDOW_WIDTH = 920;
 const uint16_t WINDOW_HEIGHT = 660;
 
@@ -77,8 +76,9 @@ void game_logic(sessionInfo* session, bool* input_lock)
 }
 
 // First loop ran before the game is started by the player.
-void pre_game_loop(sessionInfo* session, char* highScore)
+void pre_game_loop(sessionInfo* session, char* highScore, int* UPDATES_PER_SEC)
 {
+    enum difficulty dif = easy;
     while (!session->game_started)
     {
         if (IsKeyPressed(KEY_ESCAPE) || WindowShouldClose()) CloseWindow();
@@ -86,17 +86,55 @@ void pre_game_loop(sessionInfo* session, char* highScore)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             DrawText("Press ENTER to Begin", 190, 20, 18, BLACK);
-            DrawText("High Score:", 675, 90, 24, BLACK);
-            DrawText(highScore, 735-(6*strlen(highScore)), 130, 24, BLACK);
+            
+            // Draw high score, centered on score length
+            DrawText("High Score:", 664, 90, 24, BLACK);
+            DrawText(highScore, 730-(6*strlen(highScore)), 130, 24, BLACK);
+
+            // Draw player's difficulty selection
+            DrawText("Pick a Difficulty", 635, 200, 24, BLACK);
+            DrawText("Use arrow keys to select:", 580, 235, 24, BLACK);
+            DrawText("Easy    Medium    Hard", 593, 290, 24, BLACK);
+
+            // Display box around difficulty selection
+            switch(dif)
+            {
+                case easy:
+                    // DrawRectangleLines(int posX, int posY, int width, int height, RED);
+                    DrawRectangleLines(585, 285, 70, 38, RED);
+                    break;
+                case medium:
+                    DrawRectangleLines(681, 285, 92, 38, RED);
+                    break;
+                case hard:
+                    DrawRectangleLines(797, 285, 69, 38, RED);
+                    break;
+            }
+
+            // Draw the unplayed game grid
             draw_grid_base();
         EndDrawing();
 
-        if (startHandler()) session->game_started=1;
+        if (startHandler(&dif)) session->game_started=1;
+    }
+    printf("starting\n");
+
+    switch(dif)
+    {
+        case easy:
+            *UPDATES_PER_SEC = 4;
+            break;
+        case medium:
+            *UPDATES_PER_SEC = 6;
+            break;
+        case hard:
+            *UPDATES_PER_SEC = 8;
+            break;
     }
 }
 
 // Runs game logic when player prompts to begin.
-void game_session_loop(sessionInfo* session, char* highScore)
+void game_session_loop(sessionInfo* session, char* highScore, int* UPDATES_PER_SEC)
 {
     clock_t time_update, new_time;
     bool input_lock = 0;
@@ -123,7 +161,7 @@ void game_session_loop(sessionInfo* session, char* highScore)
 
         // Enforce time update
         new_time = clock();
-        while (difftime(new_time, time_update) < CLOCKS_PER_SEC/UPDATES_PER_SEC)
+        while (difftime(new_time, time_update) < CLOCKS_PER_SEC/(*UPDATES_PER_SEC))
         {
             new_time = clock();
         }
@@ -151,6 +189,7 @@ void game_over_loop(sessionInfo* session, char* highScore)
         fclose(windata);
     }
 
+    enum difficulty dif = 1;
     while (!session->game_started)
     {
         if (IsKeyPressed(KEY_ESCAPE) || WindowShouldClose()) CloseWindow();
@@ -166,7 +205,7 @@ void game_over_loop(sessionInfo* session, char* highScore)
             DrawText(highScore, 735-(6*strlen(highScore)), 130, 24, BLACK);
         EndDrawing();
 
-        if (startHandler()) session->game_started = 1;
+        if (startHandler(&dif)) session->game_started = 1;
     }
 }
 
@@ -208,11 +247,12 @@ int main(int argc, char** argv)
 
         // Pre-Game block
         if (WindowShouldClose()) break;
-        pre_game_loop(session, highScore);
+        int UPDATES_PER_SEC;
+        pre_game_loop(session, highScore, &UPDATES_PER_SEC);
 
         // Game playing block
         if (WindowShouldClose()) break;
-        game_session_loop(session, highScore);
+        game_session_loop(session, highScore, &UPDATES_PER_SEC);
         
         // Game over block
         if (WindowShouldClose()) break;
